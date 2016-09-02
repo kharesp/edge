@@ -1,0 +1,24 @@
+group 'com.rti.edge'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'application'
+
+mainClassName = 'com.rti.edge.types.reading.ReadingPublisher'
+
+repositories {
+	mavenCentral()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+	compile 'io.reactivex:rxjava:1.1.9'
+	compile fileTree(dir: 'libs', include: ['*.jar'])
+	compile fileTree(dir: '/home/vagrant/dev_environ/incubator-edgent/target/java8/lib', include: ['*.jar'])
+}
+
+task wrapper(type: Wrapper){
+	gradleVersion = '3.0'
+}

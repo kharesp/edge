@@ -1,0 +1,9 @@
+struct Reading {
+	unsigned long long id; //64 bit unsigned int 
+	unsigned long ts; //32 bit unsigned int
+	float value; //32 bit floating point value
+	boolean property; //0 for work; 1 for load
+	unsigned long plug_id; //32 bit unsigned int
+	unsigned long household_id; //32 bit unsigned int
+	unsigned long house_id;// 32 bit unsigned int
+};

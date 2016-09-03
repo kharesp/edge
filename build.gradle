@@ -15,8 +15,8 @@ targetCompatibility = 1.8
 
 dependencies {
 	compile 'io.reactivex:rxjava:1.1.9'
-	compile fileTree(dir: 'libs', include: ['*.jar'])
-	compile fileTree(dir: '/home/vagrant/dev_environ/incubator-edgent/target/java8/lib', include: ['*.jar'])
+	compile fileTree(dir: "${System.env.NDDSHOME}/lib/java", include: ['nddsjava.jar'])
+	compile fileTree(dir: "${System.env.EDGENT_HOME}/target/java8/lib", include: ['*.jar'])
 }
 
 task wrapper(type: Wrapper){

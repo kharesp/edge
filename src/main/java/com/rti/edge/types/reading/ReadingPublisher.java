@@ -14,21 +14,25 @@ public class ReadingPublisher {
 	private static final String READINGS_PATH="/vagrant/DEBS2014/sample50.csv";
 
 	public static void main(String[] args) {
-		// --- Get domain ID --- //
-		int domainId = DOMAIN_ID;
-		if (args.length >= 1) {
-			domainId = Integer.valueOf(args[0]).intValue();
-		}
-		String filePath=READINGS_PATH;
-		if (args.length >= 2){
-			filePath=args[1];
+		if (args.length < 3){
+			System.out.println("Arguments: domainId topicName filePath expected");
+			return;
 		}
 
-		publish(domainId,filePath);
+		int domainId = DOMAIN_ID;
+		domainId = Integer.valueOf(args[0]).intValue();
+
+		String topicName=TOPIC;
+		topicName=args[1];
+
+		String filePath=READINGS_PATH;
+		filePath=args[2];
+
+		publish(domainId,topicName,filePath);
 	}
 	
 
-	public static void publish(int domainId,String filePath) {
+	public static void publish(int domainId,String topicName,String filePath) {
 
 		DomainParticipant participant = null;
 		Publisher publisher = null;
@@ -58,7 +62,7 @@ public class ReadingPublisher {
 			String typeName = ReadingTypeSupport.get_type_name();
 			ReadingTypeSupport.register_type(participant, typeName);
 
-			topic = participant.create_topic(TOPIC, 
+			topic = participant.create_topic(topicName, 
 					typeName,
 					DomainParticipant.TOPIC_QOS_DEFAULT,
 					null /* listener */,
@@ -88,7 +92,6 @@ public class ReadingPublisher {
 			Thread.sleep(100*1000);
 
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}finally {
 

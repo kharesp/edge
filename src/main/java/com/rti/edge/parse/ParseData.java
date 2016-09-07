@@ -26,8 +26,8 @@ public class ParseData {
 				}
 				long endTime=System.nanoTime();
 				System.out.println("Finished Reading File. Total lines read:"+count); 
-				System.out.format("Took %f mins or %f hours to read the file\n",
-						(endTime-startTime)/(1000000000*60.0),(endTime-startTime)/(1000000000*60.0*60.0));
+				System.out.format("Took %f seconds or %f mins or %f hours to read the file\n",
+						(endTime-startTime)/(1000000000.0),(endTime-startTime)/(1000000000*60.0),(endTime-startTime)/(1000000000*60.0*60.0));
 				observer.onCompleted();
 				br.close();
 

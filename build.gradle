@@ -4,7 +4,8 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 apply plugin: 'application'
 
-mainClassName = 'com.rti.edge.types.reading.ReadingPublisher'
+run.enabled=false
+startScripts.enabled=false
 
 repositories {
 	mavenCentral()
@@ -21,4 +22,18 @@ dependencies {
 
 task wrapper(type: Wrapper){
 	gradleVersion = '3.0'
+}
+
+
+task publisher(type: JavaExec) {
+   main = "com.rti.edge.types.reading.ReadingPublisher"
+   classpath = sourceSets.main.runtimeClasspath
+   if (project.hasProperty("appArgs")){
+	args Eval.me(appArgs)
+   }
+}
+
+task subscriber(type: JavaExec) {
+   main = "com.rti.edge.types.reading.ReadingSubscriber"
+   classpath = sourceSets.main.runtimeClasspath
 }

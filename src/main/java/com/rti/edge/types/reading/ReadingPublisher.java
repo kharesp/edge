@@ -89,9 +89,8 @@ public class ReadingPublisher {
 			lines.map(l -> new Reading(l.split(","))).subscribe(r -> {
 				final_writer.write(r, instance_handle);
 			});
-			Thread.sleep(100*1000);
 
-		} catch (InterruptedException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}finally {
 

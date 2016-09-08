@@ -28,7 +28,6 @@ import com.rti.dds.util.LoanableSequence;
 public class DDSSubscriberConnector<T extends Copyable> implements Consumer<Consumer<T>>,Supplier<Iterable<T>>{
 	private static final long serialVersionUID = 1L;
 	private String topicName;
-	private Class<T> typeClass;
 	private TypeSupportImpl typeSupport;
 	private DomainParticipant participant;
 	private Subscriber subscriber;
@@ -36,20 +35,20 @@ public class DDSSubscriberConnector<T extends Copyable> implements Consumer<Cons
 	private SampleInfoSeq infoSeq;
 	private LoanableSequence dataSeq;
 	private WaitSet waitset;
+	private Duration_t wait_timeout;
 	private StatusCondition status_condition;
 	private DataReader dataReader;
 	private Consumer<T> eventEmitter;
 
 
-	public DDSSubscriberConnector(String topicName, Class<T> typeClass, TypeSupportImpl typeSupport)
+	public DDSSubscriberConnector(String topicName,TypeSupportImpl typeSupport) throws Exception
 	{
 		this.topicName= topicName;
-		this.typeClass= typeClass;
 		this.typeSupport=typeSupport;
 		try{
 			participant=DefaultParticipant.instance();
 		}catch(Exception e){
-			System.out.println("Failed to initialize default participant");
+			throw e; 
 		}
 		initialize();
 	}
@@ -63,31 +62,32 @@ public class DDSSubscriberConnector<T extends Copyable> implements Consumer<Cons
 		DataReaderListener listener = new DataReaderListener();
 		dataReader.set_listener(listener,StatusKind.STATUS_MASK_ALL);
 	}
-	private void initialize(){
+	private void initialize() throws Exception{
 		subscriber = participant.create_subscriber(DomainParticipant.SUBSCRIBER_QOS_DEFAULT, null /* listener */,
 				StatusKind.STATUS_MASK_NONE);
 		if (subscriber == null) {
-			System.err.println("create_subscriber error\n");
-			return;
+			throw new Exception("create_subscriber error");
 		}
-		try {
-			DefaultParticipant.registerType(typeClass.getSimpleName(),typeSupport);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		topic = participant.create_topic(topicName, typeClass.getSimpleName(), DomainParticipant.TOPIC_QOS_DEFAULT, null /* listener */,
+		DefaultParticipant.registerType(typeSupport);
+
+		topic = participant.create_topic(topicName, typeSupport.get_type_nameI(), DomainParticipant.TOPIC_QOS_DEFAULT, null /* listener */,
 				StatusKind.STATUS_MASK_NONE);
 		if (topic == null) {
-			System.err.println("create_topic error\n");
-			return;
+			throw new Exception("create_topic error");
 		}
 		dataReader= subscriber.create_datareader(topic,Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_ALL);
-		dataSeq= new LoanableSequence(typeClass);
+		if(dataReader == null){
+			throw new Exception("create_datareader error");
+		}
+		dataSeq= new LoanableSequence(typeSupport.get_type());
 		infoSeq = new SampleInfoSeq();
 		status_condition = dataReader.get_statuscondition();
 		status_condition.set_enabled_statuses(StatusKind.DATA_AVAILABLE_STATUS);
 		waitset = new WaitSet();
 		waitset.attach_condition(status_condition);
+		wait_timeout = new Duration_t();
+		wait_timeout.sec = 10;
+		wait_timeout.nanosec = 0;
 	}
 	private class DataReaderListener extends DataReaderAdapter {
 
@@ -101,15 +101,12 @@ public class DDSSubscriberConnector<T extends Copyable> implements Consumer<Cons
 	public Iterable<T> get() {
 		Iterable<T> data=null;
 		ConditionSeq active_conditions_seq = new ConditionSeq();
-		Duration_t wait_timeout = new Duration_t();
-		wait_timeout.sec = 10;
-		wait_timeout.nanosec = 0;
+		
 		try {
 			waitset.wait(active_conditions_seq, wait_timeout);
 		} catch (RETCODE_TIMEOUT e) {
 			System.out.println("Wait timed out!! No conditions were triggered.\n");
 		}
-		System.out.print("Got " + active_conditions_seq.size() + " active conditions\n");
 		for (int i = 0; i < active_conditions_seq.size(); ++i) {
 
 			if (active_conditions_seq.get(i) == status_condition) {
@@ -133,9 +130,9 @@ public class DDSSubscriberConnector<T extends Copyable> implements Consumer<Cons
 			for (int j = 0; j < dataSeq.size(); ++j) {
 				if (((SampleInfo) infoSeq.get(j)).valid_data) {
 					T sample= (T) dataSeq.get(j);
-					T newData= (T) typeSupport.create_data();
-					newData.copy_from(sample);
-					data.addLast(newData);
+					T dataCopy= (T) typeSupport.create_data();
+					dataCopy.copy_from(sample);
+					data.addLast(dataCopy);
 				}
 			}
 		} catch (RETCODE_NO_DATA noData)

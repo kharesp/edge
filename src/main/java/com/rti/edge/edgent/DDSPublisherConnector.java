@@ -13,7 +13,6 @@ import com.rti.dds.topic.TypeSupportImpl;
 public class DDSPublisherConnector<T> implements Consumer<T> {
 	private static final long serialVersionUID = 1L;
 	private String topicName;
-	private Class<T> typeClass;
 	private TypeSupportImpl typeSupport;
 	private DomainParticipant participant;
 	private Publisher publisher;
@@ -22,38 +21,34 @@ public class DDSPublisherConnector<T> implements Consumer<T> {
 	private InstanceHandle_t instance_handle;
 	
 	
-	public DDSPublisherConnector(String topicName, Class<T> typeClass, TypeSupportImpl typeSupport)
+	public DDSPublisherConnector(String topicName, TypeSupportImpl typeSupport) throws Exception
 	{
 		this.topicName= topicName;
-		this.typeClass= typeClass;
 		this.typeSupport=typeSupport;
 		try{
 			participant=DefaultParticipant.instance();
 		}catch(Exception e){
-			System.out.println("Failed to initialize default participant");
+			throw e;
 		}
 		initialize();
 	}
 
-	private void initialize(){
+	private void initialize() throws Exception{
 		publisher = participant.create_publisher(
 				DomainParticipant.PUBLISHER_QOS_DEFAULT,
 				null /* listener */,
 				StatusKind.STATUS_MASK_NONE);
 		if (publisher == null) {
-			System.err.println("create_publisher error\n");
-			return;
+			throw new Exception("create_publisher error\n");
 		}
-		try {
-			DefaultParticipant.registerType(typeClass.getSimpleName(),typeSupport);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		topic = participant.create_topic(topicName, typeClass.getSimpleName(), DomainParticipant.TOPIC_QOS_DEFAULT, null /* listener */,
+
+		DefaultParticipant.registerType(typeSupport);
+
+		topic = participant.create_topic(topicName,typeSupport.get_type_nameI(),
+				DomainParticipant.TOPIC_QOS_DEFAULT, null /* listener */,
 				StatusKind.STATUS_MASK_NONE);
 		if (topic == null) {
-			System.err.println("create_topic error\n");
-			return;
+			throw new Exception("create_topic error\n");
 		}
 
 		writer = publisher.create_datawriter(
@@ -62,8 +57,7 @@ public class DDSPublisherConnector<T> implements Consumer<T> {
 				null /* listener */,
 				StatusKind.STATUS_MASK_NONE);
 		if (writer == null) {
-			System.err.println("create_datawriter error\n");
-			return;
+			throw new Exception("create_datawriter error\n");
 		}
 		instance_handle= InstanceHandle_t.HANDLE_NIL;
 	}

@@ -27,8 +27,8 @@ public class DefaultParticipant {
 		}
 	}
 
-	public static void  registerType(String typeName,TypeSupportImpl typeSupportClass) throws Exception{
-		typeSupportClass.register_typeI(instance(), typeName);
+	public static void  registerType(TypeSupportImpl typeSupportClass) throws Exception {
+		typeSupportClass.register_typeI(instance(), typeSupportClass.get_type_nameI());
 	}
 
 }

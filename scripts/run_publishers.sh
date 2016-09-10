@@ -1,14 +1,4 @@
-if [ "$#" -ne 1 ]; then
-	echo "Usage: ./run_publishers.sh houseId"
-	exit
-fi
-
-houseId=$1
-dataPath="/home/pi/data/$houseId"
-echo $dataPath
-
-for entry in `ls $dataPath`; do 
-	houseHold=$dataPath/$entry
-	echo "Publishing data for houseHold id: $houseHold"
-	./gradlew publisher --no-rebuild --no-daemon -PappArgs="['0','Readings','$houseHold']" > /dev/null 2>&1  &
-done
+h_id=$1
+dataFile="../"$2
+echo "Publishing data for house id: $h_id"
+./gradlew publisher --no-rebuild --no-daemon -PappArgs="['0','Readings','$dataFile']"

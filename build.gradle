@@ -34,6 +34,6 @@ task publisher(type: JavaExec) {
 }
 
 task subscriber(type: JavaExec) {
-   main = "com.rti.edge.types.reading.ReadingSubscriber"
+   main = "com.rti.edge.analytics.ReadingsReceiver"
    classpath = sourceSets.main.runtimeClasspath
 }

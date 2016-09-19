@@ -1,0 +1,7 @@
+struct HouseAvg{
+	unsigned long ts; //32 bit unsigned int
+	float average; //32 bit floating poing value
+	boolean property; //0 for work; 1 for load
+	unsigned long window_size; //32 bit unsigned int
+	unsigned long house_id; //32 bit unsigned int
+};

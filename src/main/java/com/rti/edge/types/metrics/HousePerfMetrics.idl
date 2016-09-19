@@ -1,0 +1,8 @@
+struct HousePerfMetrics{
+	unsigned long ts;
+	float throughput_per_sec;
+	float avg_latency_mili;
+	float min_latency_mili;
+	float max_latency_mili;
+	unsigned long  house_id;
+};

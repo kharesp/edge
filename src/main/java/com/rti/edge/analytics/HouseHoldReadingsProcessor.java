@@ -101,8 +101,7 @@ public class HouseHoldReadingsProcessor implements Consumer<Consumer<HouseholdAv
 			for(float plug_load:plug_currAvgLoad.values()){
 				avg_houseHoldLoad+=plug_load;
 			}
-			System.out.format("update ts:%d, house_hold:%d load:%f\n",
-					curr_update.ts,curr_update.household_id, avg_houseHoldLoad);
+			
 			eventEmitter.accept(new HouseholdAvg(curr_update.ts,
 					avg_houseHoldLoad,
 					true,

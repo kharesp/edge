@@ -20,7 +20,7 @@ public class ParseData {
 				for (String line = br.readLine(); line != null; line = br.readLine()) {
 					count += 1;
 					observer.onNext(line);
-					Thread.sleep(100);
+					Thread.sleep(10);
 					if (count % 10000 == 0) {
 						System.out.format("Read %d lines\n", count);
 					}

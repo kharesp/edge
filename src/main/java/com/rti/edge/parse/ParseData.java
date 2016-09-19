@@ -20,6 +20,7 @@ public class ParseData {
 				for (String line = br.readLine(); line != null; line = br.readLine()) {
 					count += 1;
 					observer.onNext(line);
+					Thread.sleep(100);
 					if (count % 10000 == 0) {
 						System.out.format("Read %d lines\n", count);
 					}
@@ -32,7 +33,7 @@ public class ParseData {
 				observer.onCompleted();
 				br.close();
 
-			} catch (IOException e) {
+			} catch (IOException | InterruptedException e) {
 				observer.onError(e);
 			}
 		});

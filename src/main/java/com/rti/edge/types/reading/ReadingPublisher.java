@@ -25,10 +25,12 @@ public class ReadingPublisher {
 		String topicName=TOPIC;
 		topicName=args[1];
 
+
 		String filePath=READINGS_PATH;
 		filePath=args[2];
-
+		
 		publish(domainId,topicName,filePath);
+		
 	}
 	
 
@@ -40,6 +42,7 @@ public class ReadingPublisher {
 		ReadingDataWriter writer = null;
 
 		try {
+			
 			participant = DomainParticipantFactory.TheParticipantFactory.
 					create_participant(domainId,
 							DomainParticipantFactory.PARTICIPANT_QOS_DEFAULT,
@@ -49,7 +52,10 @@ public class ReadingPublisher {
 				System.err.println("create_participant error\n");
 				return;
 			}
-
+			DomainParticipantQos pQos= new DomainParticipantQos();
+			participant.get_qos(pQos);
+			System.out.println("rtps_host_id:"+pQos.wire_protocol.rtps_host_id);
+					
 			publisher = participant.create_publisher(
 					DomainParticipant.PUBLISHER_QOS_DEFAULT,
 					null /* listener */,
@@ -72,6 +78,11 @@ public class ReadingPublisher {
 				return;
 			}
 
+			DataWriterQos wQos= new DataWriterQos();
+			participant.get_default_datawriter_qos(wQos);
+			System.out.println("Default dw qos:"+wQos.history.kind);
+			System.out.println("Default dw qos:"+wQos.reliability.kind);
+
 			writer = (ReadingDataWriter) publisher.create_datawriter(
 					topic, 
 					Publisher.DATAWRITER_QOS_DEFAULT,
@@ -85,10 +96,24 @@ public class ReadingPublisher {
 
 			InstanceHandle_t instance_handle = InstanceHandle_t.HANDLE_NIL;
 
+			System.out.println("Publisher will wait for discovery of all subscribers");
+			PublicationMatchedStatus pubStatus = new PublicationMatchedStatus();
+			while(true){
+				writer.get_publication_matched_status(pubStatus);
+				if(pubStatus.current_count==1)
+					break;
+				System.out.println("Publisher is waiting for discovery. Current subscriber count:"+pubStatus.current_count);
+				Thread.sleep(5000);
+			}
+			System.out.format("Publisher discovered %d subscribers and will start sending data\n",pubStatus.current_count);
+
 			Observable<String> lines = ParseData.readFile(filePath);
 			lines.map(l -> new Reading(l.split(","))).subscribe(r -> {
 				final_writer.write(r, instance_handle);
 			});
+			while(true){
+				Thread.sleep(10000);
+			}
 
 		} catch (Exception e) {
 			e.printStackTrace();

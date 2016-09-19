@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import org.apache.edgent.function.Consumer;
 import org.apache.edgent.function.Supplier;
 import com.rti.dds.domain.DomainParticipant;
+import com.rti.dds.domain.DomainParticipantQos;
 import com.rti.dds.infrastructure.ConditionSeq;
 import com.rti.dds.infrastructure.Copyable;
 import com.rti.dds.infrastructure.Duration_t;
@@ -12,15 +13,18 @@ import com.rti.dds.infrastructure.RETCODE_TIMEOUT;
 import com.rti.dds.infrastructure.ResourceLimitsQosPolicy;
 import com.rti.dds.infrastructure.StatusCondition;
 import com.rti.dds.infrastructure.StatusKind;
+import com.rti.dds.infrastructure.StringSeq;
 import com.rti.dds.infrastructure.WaitSet;
 import com.rti.dds.subscription.DataReader;
 import com.rti.dds.subscription.DataReaderAdapter;
+import com.rti.dds.subscription.DataReaderQos;
 import com.rti.dds.subscription.InstanceStateKind;
 import com.rti.dds.subscription.SampleInfo;
 import com.rti.dds.subscription.SampleInfoSeq;
 import com.rti.dds.subscription.SampleStateKind;
 import com.rti.dds.subscription.Subscriber;
 import com.rti.dds.subscription.ViewStateKind;
+import com.rti.dds.topic.ContentFilteredTopic;
 import com.rti.dds.topic.Topic;
 import com.rti.dds.topic.TypeSupportImpl;
 import com.rti.dds.util.LoanableSequence;
@@ -32,6 +36,9 @@ public class DDSSubscriberConnector<T extends Copyable> implements Consumer<Cons
 	private DomainParticipant participant;
 	private Subscriber subscriber;
 	private Topic topic;	
+	private ContentFilteredTopic cft;
+	private String cftStr;
+	private StringSeq cftParams;
 	private SampleInfoSeq infoSeq;
 	private LoanableSequence dataSeq;
 	private WaitSet waitset;
@@ -43,10 +50,22 @@ public class DDSSubscriberConnector<T extends Copyable> implements Consumer<Cons
 
 	public DDSSubscriberConnector(String topicName,TypeSupportImpl typeSupport) throws Exception
 	{
+		this(topicName,typeSupport,null,null);
+	}
+	public DDSSubscriberConnector(String topicName,TypeSupportImpl typeSupport,
+			String cftStr,StringSeq params)throws Exception{
+		
 		this.topicName= topicName;
 		this.typeSupport=typeSupport;
+		if(cftStr!=null){
+			this.cftStr=cftStr;
+			this.cftParams=params;
+		}
 		try{
 			participant=DefaultParticipant.instance();
+			DomainParticipantQos pQos= new DomainParticipantQos();
+			participant.get_qos(pQos);
+			System.out.println("rtps_host_id:"+pQos.wire_protocol.rtps_host_id);
 		}catch(Exception e){
 			throw e; 
 		}
@@ -75,10 +94,26 @@ public class DDSSubscriberConnector<T extends Copyable> implements Consumer<Cons
 		if (topic == null) {
 			throw new Exception("create_topic error");
 		}
-		dataReader= subscriber.create_datareader(topic,Subscriber.DATAREADER_QOS_DEFAULT, null, StatusKind.STATUS_MASK_ALL);
-		if(dataReader == null){
-			throw new Exception("create_datareader error");
+		if(cftStr!=null){
+			cft=participant.create_contentfilteredtopic("ContentFilteredTopic", topic, cftStr,cftParams);
+			dataReader = subscriber.create_datareader(cft, Subscriber.DATAREADER_QOS_DEFAULT, null,
+					StatusKind.STATUS_MASK_ALL);
+			if (dataReader == null) {
+				throw new Exception("create_datareader error");
+			}
+		}else{
+			dataReader = subscriber.create_datareader(topic, Subscriber.DATAREADER_QOS_DEFAULT, null,
+					StatusKind.STATUS_MASK_ALL);
+			if (dataReader == null) {
+				throw new Exception("create_datareader error");
+			}
 		}
+		DataReaderQos rQos= new DataReaderQos();
+		participant.get_default_datareader_qos(rQos);
+		System.out.println("Default dr qos:"+rQos.history.kind);
+		System.out.println("Default dr qos:"+rQos.reliability.kind);
+
+		
 		dataSeq= new LoanableSequence(typeSupport.get_type());
 		infoSeq = new SampleInfoSeq();
 		status_condition = dataReader.get_statuscondition();

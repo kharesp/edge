@@ -9,12 +9,10 @@ import org.apache.edgent.function.BiConsumer;
 import org.apache.edgent.function.Consumer;
 import org.apache.edgent.topology.TStream;
 import org.apache.edgent.topology.Topology;
-import org.apache.edgent.topology.plumbing.PlumbingStreams;
 import org.apache.edgent.window.Partition;
 import org.apache.edgent.window.Policies;
 import org.apache.edgent.window.Window;
 import org.apache.edgent.window.Windows;
-
 import com.rti.edge.types.houseAvg.HouseAvg;
 import com.rti.edge.types.householdAvg.HouseholdAvg;
 import com.rti.edge.types.reading.Reading;
@@ -55,7 +53,6 @@ public class HouseReadingsProcessor implements Consumer<Consumer<HouseAvg>> {
 		for (TStream<Reading> houseHold_stream : houseHold_streams) {
 			TStream<HouseholdAvg> houseHold_avgLoad_stream = new HouseHoldReadingsProcessor(topology, houseHold_stream,
 					window_length_secs).process();
-			PlumbingStreams.isolate(houseHold_avgLoad_stream, 10);
 			houseHold_avgLoad_streams.add(houseHold_avgLoad_stream);
 		}
 		TStream<HouseholdAvg> all_houseHold_avgs= houseHold_avgLoad_streams.get(0)

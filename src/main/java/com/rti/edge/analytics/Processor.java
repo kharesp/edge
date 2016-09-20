@@ -69,6 +69,7 @@ public class Processor {
 				process();
 		result_stream.sink(hAvg -> {
 			stats.computeMetrics();
+			System.out.println(hAvg);
 			resultsPub.accept(hAvg);
 			if(stats.count%10==0){
 				Metrics update=stats.getUpdate();

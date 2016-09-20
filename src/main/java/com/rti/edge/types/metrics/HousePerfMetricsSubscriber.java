@@ -52,44 +52,31 @@ java -Djava.ext.dirs=$NDDSHOME/class HousePerfMetricsPublisher <domain_id>
 java -Djava.ext.dirs=$NDDSHOME/class HousePerfMetricsSubscriber <domain_id>  
 */
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Arrays;
-
 import com.rti.dds.domain.*;
 import com.rti.dds.infrastructure.*;
 import com.rti.dds.subscription.*;
 import com.rti.dds.topic.*;
-import com.rti.ndds.config.*;
 
 // ===========================================================================
 
 public class HousePerfMetricsSubscriber {
+	public static int domainId=0;
     // -----------------------------------------------------------------------
     // Public Methods
     // -----------------------------------------------------------------------
 
     public static void main(String[] args) {
-        // --- Get domain ID --- //
-        int domainId = 0;
-        if (args.length >= 1) {
-            domainId = Integer.valueOf(args[0]).intValue();
+        if (args.length < 2) {
+        	System.out.println("args: from_hId, to_hId");
+        	return;
         }
 
-        // -- Get max loop count; 0 means infinite loop --- //
-        int sampleCount = 0;
-        if (args.length >= 2) {
-            sampleCount = Integer.valueOf(args[1]).intValue();
-        }
+        int from_hId= Integer.valueOf(args[0]).intValue();
+        int to_hId= Integer.valueOf(args[1]).intValue();
 
-        /* Uncomment this to turn on additional logging
-        Logger.get_instance().set_verbosity_by_category(
-            LogCategory.NDDS_CONFIG_LOG_CATEGORY_API,
-            LogVerbosity.NDDS_CONFIG_LOG_VERBOSITY_STATUS_ALL);
-        */
 
-        // --- Run --- //
-        subscriberMain(domainId, sampleCount);
+        subscriberMain(from_hId,to_hId);
     }
 
     // -----------------------------------------------------------------------
@@ -104,7 +91,7 @@ public class HousePerfMetricsSubscriber {
 
     // -----------------------------------------------------------------------
 
-    private static void subscriberMain(int domainId, int sampleCount) {
+    private static void subscriberMain(int from_hId,int to_hId) {
 
         DomainParticipant participant = null;
         Subscriber subscriber = null;
@@ -159,6 +146,10 @@ public class HousePerfMetricsSubscriber {
                 System.err.println("create_topic error\n");
                 return;
             }                     
+            
+            ContentFilteredTopic cft= participant.create_contentfilteredtopic("ContentFilteredTopic",
+            		topic, "house_id >=%0 and house_id<=%1", new StringSeq(Arrays.asList(Integer.toString(from_hId),
+            				Integer.toString(to_hId))));
 
             // --- Create reader --- //
 
@@ -169,7 +160,7 @@ public class HousePerfMetricsSubscriber {
 
             reader = (HousePerfMetricsDataReader)
             subscriber.create_datareader(
-                topic, Subscriber.DATAREADER_QOS_DEFAULT, listener,
+                cft, Subscriber.DATAREADER_QOS_DEFAULT, listener,
                 StatusKind.STATUS_MASK_ALL);
             if (reader == null) {
                 System.err.println("create_datareader error\n");
@@ -180,11 +171,7 @@ public class HousePerfMetricsSubscriber {
 
             final long receivePeriodSec = 4;
 
-            for (int count = 0;
-            (sampleCount == 0) || (count < sampleCount);
-            ++count) {
-                System.out.println("HousePerfMetrics subscriber sleeping for "
-                + receivePeriodSec + " sec...");
+            while(true) {
                 try {
                     Thread.sleep(receivePeriodSec * 1000);  // in millisec
                 } catch (InterruptedException ix) {

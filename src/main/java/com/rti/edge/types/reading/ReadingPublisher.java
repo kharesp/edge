@@ -15,7 +15,7 @@ public class ReadingPublisher {
 
 	public static void main(String[] args) {
 		if (args.length < 3){
-			System.out.println("Arguments: domainId topicName filePath expected");
+			System.out.println("Arguments: domainId topicName filePath ");
 			return;
 		}
 
@@ -100,7 +100,7 @@ public class ReadingPublisher {
 			PublicationMatchedStatus pubStatus = new PublicationMatchedStatus();
 			while(true){
 				writer.get_publication_matched_status(pubStatus);
-				if(pubStatus.current_count==15)
+				if(pubStatus.current_count>=15)
 					break;
 				System.out.println("Publisher is waiting for discovery. Current subscriber count:"+pubStatus.current_count);
 				Thread.sleep(5000);
